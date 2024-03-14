@@ -9,7 +9,7 @@ Setup an EC2 that you can ssh in to test your work out. We will start by connect
 
 If you are using AWS IAM credentials, then AWS's tutorial works fine. You should be able to do
 
-```
+```sh
 $ RDSHOST=xxx.yyy.us-east-1.rds.amazonaws.com
 $ USERNAME=jane_doe
 $ export PGPASSWORD="$( aws rds generate-db-auth-token --hostname $RDSHOST --port 5432 --username $USERNAME )"
@@ -24,7 +24,7 @@ To fix this, you have to explicitely assume the the role that contains the the I
 ### Solution
 
 You can follow this script by Github user quiver
-```
+```shell
 #! /bin/bash
 # helper script to connect to Amazon RDS PostgreSQL with IAM credentials
 # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html
@@ -61,7 +61,7 @@ psql "host=$RDSHOST dbname=$DBNAME user=$USERNAME"
 ```
 
 You will also need an IAM policy
-```
+```json
 {
    "Version": "2012-10-17",
    "Statement": [
@@ -87,19 +87,19 @@ Where things get annoying is in an enterprise environments,
 
 In this case, you have to make sure that you have NO PROXY Set to the sts endpoint. You can also typically append --debug to the end of aws commands to see what is failing.
 
-```
+```shell
 export NO_PROXY=169.254.169.254
 ``` 
 
 You may also want to add other endpoints such as 
-```
+```shell
 export NO_PROXY=s3.amazonaws.com,localhost,127.0.0.1,169.254.169.254,10.0.0.0/8"
 ```
 
 The other possibly failure appears to be if your other proxies are not set. These errors usually manifest app side, when your app tries to connect to certain things.
 
 Make sure you export the following environment variables with your proper proxies.
-```
+```shell
 export https_proxy=<your enterprise aws proxy>
 export http_proxy=<your enterprise aws proxy>
 export HTTPS_PROXY=<your enterprise aws proxy>
@@ -119,7 +119,7 @@ Thanks to Alex on this particular issue here for helping me out with this [AWS S
 
 Unfortunately, even this is a little bit old. With AWS-SDK, the code to generate an auth token is no longer identical. They introduced some breaking changes. Here is the code sample linked
 
-```
+```go
 type iamDb struct {
 	Config
 	awsSession *session.Session
@@ -191,7 +191,7 @@ Unfortunately, IAM authentication doesn't seem to work with CNAME's. Perhaps it 
 
 What I added to my code was the following.
 
-```
+```go
 cnameUntrimmed, err := lookup(ia.DatabaseHost)
 
 if err != nil {
@@ -215,7 +215,7 @@ authToken, err := ia.AuthTokenGenerator.GetAuthToken(ctx, region, cname, ia.Data
 Essentially every connection now has to do a CNAME lookup. Up to you to decide if the overhead is worth it.
 
 ### Full Code Sample from a production application. Some potentially sensitive things were removed
-```
+```go
 package db
 
 import (
